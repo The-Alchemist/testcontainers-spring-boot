@@ -33,9 +33,11 @@ import org.springframework.core.Ordered;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 
 import java.util.LinkedHashMap;
 
+import static com.playtika.test.couchbase.CouchbaseContainerFactory.COUCHBASE_HOST_NAME;
 import static com.playtika.test.couchbase.CouchbaseProperties.BEAN_NAME_EMBEDDED_COUCHBASE;
 
 @Slf4j
@@ -47,10 +49,11 @@ public class EmbeddedCouchbaseBootstrapConfiguration {
 
     @Bean(name = BEAN_NAME_EMBEDDED_COUCHBASE, destroyMethod = "stop")
     public GenericContainer couchbase(ConfigurableEnvironment environment,
-                                      CouchbaseProperties properties) throws Exception {
+                                      CouchbaseProperties properties,
+                                      Network network) {
 
         log.info("Starting couchbase server. Docker image: {}", properties.dockerImage);
-        GenericContainer couchbase = CouchbaseContainerFactory.create(properties, log);
+        GenericContainer couchbase = CouchbaseContainerFactory.create(properties, log, network);
         couchbase.start();
         registerCouchbaseEnvironment(couchbase, environment, properties);
         return couchbase;
@@ -71,6 +74,7 @@ public class EmbeddedCouchbaseBootstrapConfiguration {
         map.put("embedded.couchbase.bootstrapHttpDirectPort", mappedHttpPort);
         map.put("embedded.couchbase.bootstrapCarrierDirectPort", mappedCarrierPort);
         map.put("embedded.couchbase.host", host);
+        map.put("embedded.couchbase.containerHost", COUCHBASE_HOST_NAME); // access from other containers
         map.put("embedded.couchbase.bucket", properties.bucket);
         map.put("embedded.couchbase.user", properties.bucket);
         map.put("embedded.couchbase.password", properties.password);
